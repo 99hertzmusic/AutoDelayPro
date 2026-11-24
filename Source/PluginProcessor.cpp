@@ -30,6 +30,22 @@ AutoDelayProAudioProcessor::AutoDelayProAudioProcessor()
     pWidth    = apvts.getRawParameterValue ("width");
     pFreeze   = apvts.getRawParameterValue ("freeze");
     setLicenceInfo (licence.check());
+    licenceWatcher = std::make_unique<hz::LicenceWatcher> (licence, licenceInfo, [this] (const hz::LicenceInfo& i) { setLicenceInfo (i); });
+}
+
+bool AutoDelayProAudioProcessor::usesUpgradeSettings() const
+{
+    using namespace ad::gate;
+    auto moved = [] (const std::atomic<float>* p, float def) { return std::abs (p->load() - def) > 0.05f; };
+    const int style = juce::jlimit (0, ad::numStyles - 1, (int) pStyle->load());
+    return ! styleAllowed (style, false)
+        || (proTime   && (int) pTime->load() != ad::timeAuto)
+        || (proDuck   && moved (pDuck,  ad::defDuck))
+        || (proThrows && pThrows->load() > 0.5f)
+        || (proTone   && moved (pTone,  ad::defTone))
+        || (proDrive  && moved (pDrive, ad::defDrive))
+        || (proWidth  && moved (pWidth, ad::defWidth))
+        || (proFreeze && pFreeze->load() > 0.5f);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout AutoDelayProAudioProcessor::createParameterLayout()

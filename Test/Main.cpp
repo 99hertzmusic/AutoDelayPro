@@ -11,6 +11,7 @@
 #include <juce_dsp/juce_dsp.h>
 #include "../Source/PluginProcessor.h"
 #include "../Source/PluginEditor.h"
+#include "LicenceTests.h"
 #include <cmath>
 #include <map>
 
@@ -722,6 +723,22 @@ static void snapshots (const juce::File& outDir)
     snap ("ui-9-pro-freeze-slapback-1-16.png", hz::LicenceInfo::pro, nullptr, [] (APP& p) { setParam (p, "style", (float) ad::slapback); setParam (p, "time", (float) ad::n16); }, 128.0, 0.6,
           [] (APP& p) { setParam (p, "freeze", 1); });
     snap ("ui-10-pro-panel.png", hz::LicenceInfo::pro, "", nullptr);
+
+    // Licence states (Launch prep renders)
+    auto saved = [] (APP& p)
+    {
+        setParam (p, "style", (float) ad::dub); setParam (p, "time", (float) ad::n4D); setParam (p, "duck", 85);
+        setParam (p, "tone", -40); setParam (p, "drive", 55); setParam (p, "width", 130); setParam (p, "throws", 1);
+    };
+    snap ("licence-1-free.png", hz::LicenceInfo::none, nullptr, nullptr);
+    snap ("licence-2-free-panel.png", hz::LicenceInfo::none, "", nullptr);
+    snap ("licence-3-trial.png", hz::LicenceInfo::trial, nullptr, [] (APP& p) { setParam (p, "style", (float) ad::tape); });
+    snap ("licence-4-trial-panel.png", hz::LicenceInfo::trial, "", [] (APP& p) { setParam (p, "style", (float) ad::tape); });
+    snap ("licence-5-trial-ended.png", hz::LicenceInfo::trialExpired, nullptr, nullptr);
+    snap ("licence-6-trial-ended-panel.png", hz::LicenceInfo::trialExpired, "", nullptr);
+    snap ("licence-7-licensed.png", hz::LicenceInfo::pro, nullptr, saved);
+    snap ("licence-8-licensed-panel.png", hz::LicenceInfo::pro, "", saved);
+    snap ("licence-9-saved-upgrade-settings.png", hz::LicenceInfo::trialExpired, nullptr, saved);
 }
 
 // ── Demos on real audio ──────────────────────────────────────────────────────
@@ -817,7 +834,7 @@ int main (int argc, char** argv)
         if (! arg.containsChar ('=')) continue;
         const auto name = arg.upToFirstOccurrenceOf ("=", false, false);
         const auto info = hz::Licence::verify (arg.fromFirstOccurrenceOf ("=", false, false), "autodelaypro");
-        const char* kinds[] = { "none", "trial", "pro", "trialExpired", "invalid" };
+        const char* kinds[] = { "none", "trial", "pro", "trialExpired", "invalid", "saveFailed" };
         std::printf ("  key %-14s -> %-12s daysLeft=%d\n", name.toRawUTF8(), kinds[(int) info.kind], info.daysLeft());
         hz::LicenceInfo::Kind want = hz::LicenceInfo::invalid;
         if (name == "pro" || name == "all") want = hz::LicenceInfo::pro;
@@ -826,6 +843,25 @@ int main (int argc, char** argv)
         check (info.kind == want, "key " + name + " -> " + kinds[(int) info.kind]);
     }
 
+    hztest::runLicenceTests<APP> ("autodelaypro", [] (APP& p) { return p.proUnlocked.load(); });
+    hztest::runSavedSettingsTests<APP> ([] (APP& p)
+    {
+        setParam (p, "style", (float) ad::tape); setParam (p, "time", (float) ad::n4); setParam (p, "duck", 90);
+        setParam (p, "tone", -50); setParam (p, "drive", 40); setParam (p, "width", 120);
+        setParam (p, "throws", 1); setParam (p, "freeze", 1);
+    });
+    {
+        // each upgrade-only setting on its own is flagged; free ones aren't
+        auto flagged = [] (std::function<void (APP&)> f) { APP p; f (p); return p.usesUpgradeSettings(); };
+        hztest::expect (flagged ([] (APP& p) { setParam (p, "style", (float) ad::dub); }), "saved DUB style is flagged");
+        hztest::expect (flagged ([] (APP& p) { setParam (p, "time", (float) ad::n8); }), "saved note value is flagged");
+        hztest::expect (flagged ([] (APP& p) { setParam (p, "drive", 30); }), "saved drive is flagged");
+        hztest::expect (flagged ([] (APP& p) { setParam (p, "freeze", 1); }), "saved freeze is flagged");
+        hztest::expect (! flagged ([] (APP& p) { setParam (p, "style", (float) ad::pingPong); setParam (p, "feedback", 80); setParam (p, "mix", 70); }),
+                        "free settings (PING PONG, feedback, mix) aren't flagged");
+    }
+    const int lic = hztest::finish();
+
     std::printf ("\n%s: %d failure(s)\n", failures == 0 ? "ALL PASS" : "FAILURES", failures);
-    return failures == 0 ? 0 : 1;
+    return failures == 0 && lic == 0 ? 0 : 1;
 }

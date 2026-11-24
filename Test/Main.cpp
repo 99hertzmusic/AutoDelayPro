@@ -844,6 +844,7 @@ int main (int argc, char** argv)
     }
 
     hztest::runLicenceTests<APP> ("autodelaypro", [] (APP& p) { return p.proUnlocked.load(); });
+    hztest::renderLicenceStates<APP> ("autodelaypro", outDir);
     hztest::runSavedSettingsTests<APP> ([] (APP& p)
     {
         setParam (p, "style", (float) ad::tape); setParam (p, "time", (float) ad::n4); setParam (p, "duck", 90);

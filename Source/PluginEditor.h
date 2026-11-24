@@ -62,8 +62,10 @@ public:
     void resized() override;
     void mouseDown (const juce::MouseEvent& e) override;   // click outside the card closes it
     std::function<void()> onLicenceChanged;
+    void setMessage (const juce::String& text, bool isError);   // (also used by the test renders)
 private:
     void refresh();
+    void licenceResult (const juce::String& error, const juce::String& okMessage);
     juce::Rectangle<int> card() const;
     AutoDelayProAudioProcessor& proc;
     juce::String reason, message;
@@ -71,7 +73,8 @@ private:
     juce::TextEditor emailBox, keyBox;
     juce::ToggleButton subscribe { "Send me tips and offers" };
     juce::TextButton trialButton { "START 7-DAY FREE TRIAL" }, unlockButton { "UNLOCK" },
-                     buyButton { "UPGRADE" }, closeButton { "CLOSE" };
+                     buyButton { "UPGRADE" }, closeButton { "CLOSE" },
+                     activateButton { "ACTIVATE THIS COMPUTER" }, moveButton { "MOVE TO ANOTHER COMPUTER" };
 };
 
 // The hero screen: each repeat as a bar on a beat grid (height = how loud it comes back),

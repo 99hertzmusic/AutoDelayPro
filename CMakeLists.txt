@@ -58,7 +58,7 @@ target_compile_definitions(AutoDelayPro PUBLIC
 target_compile_features(AutoDelayPro PUBLIC cxx_std_17)
 
 target_link_libraries(AutoDelayPro
-    PRIVATE AutoDelayProData juce::juce_audio_utils juce::juce_dsp
+    PRIVATE AutoDelayProData juce::juce_audio_utils juce::juce_dsp juce::juce_cryptography
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 
 # Offline test: grid timing, darkening, feedback bound, ducking, throws, clicks, state, Lite gating, keys, demos, UI (not shipped)
@@ -69,5 +69,5 @@ if(AUTODELAYPRO_BUILD_TEST)
     target_compile_definitions(AutoDelayProTest PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1
         AUTODELAYPRO_TEST=1 JucePlugin_VersionString="1.0.0" JUCE_MODAL_LOOPS_PERMITTED=1)
     target_compile_features(AutoDelayProTest PRIVATE cxx_std_17)
-    target_link_libraries(AutoDelayProTest PRIVATE AutoDelayProData juce::juce_audio_utils juce::juce_dsp juce::juce_recommended_config_flags)
+    target_link_libraries(AutoDelayProTest PRIVATE AutoDelayProData juce::juce_audio_utils juce::juce_dsp juce::juce_cryptography juce::juce_recommended_config_flags)
 endif()

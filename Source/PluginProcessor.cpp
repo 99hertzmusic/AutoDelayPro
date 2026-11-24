@@ -373,7 +373,7 @@ void AutoDelayProAudioProcessor::fireThrow (int N, int histNow, juce::int64 nowA
         const float vl = (1.0f - pp) * xl + pp * mono, vr = (1.0f - pp) * xr;
         const juce::int64 rel = -age + shift;                    // relative to the current write index
         int idx = (int) (((juce::int64) w + rel) % size); if (idx < 0) idx += size;
-        auto& dst = rel <= 0 ? line : inject;
+        auto* dst = rel <= 0 ? line : inject;   // arrays decay to pointers (MSVC needs auto*, not auto&)
         dst[0][(size_t) idx] += vl; dst[1][(size_t) idx] += vr;
     }
     const juce::int64 srcStart = nowAbs - age0;
